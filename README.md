@@ -12,11 +12,11 @@ pip install -r requirements.txt
 
 API Endpoints
 ```
-GET /api/v1/products
-GET /api/v1/products/{id}
-POST /api/v1/products
-PUT /api/v1/products/{id}
-DELETE /api/v1/products/{id}
+GET /api/v1/products/
+GET /api/v1/products/{id}/
+POST /api/v1/products/
+PUT /api/v1/products/{id}/
+DELETE /api/v1/products/{id}/
 ```
 
 USAGE
@@ -48,5 +48,5 @@ curl -X PUT http://localhost:5000/api/v1/products/1/ \
 }'
 
 # Delete a product
-curl -X DELETE http://localhost:5000/api/v1/products/1
+curl -X DELETE http://localhost:5000/api/v1/products/1/
 ```
