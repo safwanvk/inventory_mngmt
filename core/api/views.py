@@ -2,8 +2,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import ProductSerializer
+from .serializers import ProductSerializer, StockManagementSerializer
 import core.api.services as product_service
+
 
 class ProductListCreateView(APIView):
     def get(self, request):
@@ -36,3 +37,13 @@ class ProductDetailView(APIView):
         product = product_service.get_product_by_id(product_id)
         product_service.delete_product(product)
         return Response({'detail': 'Product deleted'}, status=status.HTTP_204_NO_CONTENT)
+
+class StockManagementView(APIView):
+    
+    def post(self, request, product_id):
+        product = product_service.get_product_by_id(product_id)
+        serializer = StockManagementSerializer(product, data=request.data)
+        if serializer.is_valid():
+            sell_product = product_service.sell_product(product, serializer.validated_data)
+            return Response(ProductSerializer(sell_product).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
