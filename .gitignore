@@ -83,7 +83,10 @@ target/
 *.pot
 *.pyc
 __pycache__/
+core/__pycache__/
+inventory_mngmt/__pycache__/
 local_settings.py
 
 .env
 db.sqlite3
+
