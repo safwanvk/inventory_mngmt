@@ -22,10 +22,15 @@ def delete_product(instance):
 def get_product_by_id(pk):
       return get_object_or_404(Product, pk=pk)
 
+def get_product_by_id_locked(product_id):
+      return Product.objects.select_for_update().get(id=product_id)
+
 def sell_product(instance, validated_data):
-      with transaction.atomic():
-            print(validated_data)
-            value = validated_data.get('quantity_to_sell')
-            instance.quantity_in_stock -= value
-            instance.save()
-            return instance
+      quantity = validated_data.get('quantity_to_sell')
+
+      if instance.quantity_in_stock < quantity:
+        raise ValueError("Insufficient stock")
+
+      instance.quantity_in_stock -= quantity
+      instance.save()
+      return instance
