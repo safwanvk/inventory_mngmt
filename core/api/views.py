@@ -11,6 +11,7 @@ class ProductListCreateView(APIView):
     def get(self, request):
         name_filter = request.query_params.get('name', '').strip()
         min_qty_filter = request.query_params.get('minimum_quantity_in_stock')
+        ordering = request.query_params.get('ordering', 'name')
         products = product_service.list_products()
 
         if name_filter:
@@ -18,6 +19,9 @@ class ProductListCreateView(APIView):
 
         if min_qty_filter and min_qty_filter.isdigit():
             products = products.filter(quantity_in_stock__gte=int(min_qty_filter))
+
+        if ordering.lstrip('-') in ['price', 'name']:  # allow only specific fields
+            products = products.order_by(ordering)
 
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
