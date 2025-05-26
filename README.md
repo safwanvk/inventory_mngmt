@@ -104,17 +104,17 @@ curl -X POST http://localhost:8000/api/v1/products/ \
 
 ### 📃 Get All Products
 ```bash
-curl -X GET http://localhost:5000/api/v1/products/
+curl -X GET http://localhost:8000/api/v1/products/
 ```
 
 ### 🔍 Get Product by ID
 ```bash
-curl -X GET http://localhost:5000/api/v1/products/1/
+curl -X GET http://localhost:8000/api/v1/products/1/
 ```
 
 ### ✏️ Update a Product
 ```bash
-curl -X PUT http://localhost:5000/api/v1/products/1/ \
+curl -X PUT http://localhost:8000/api/v1/products/1/ \
 -H "Content-Type: application/json" \
 -d '{
   "name": "Updated Product 1",
@@ -126,12 +126,12 @@ curl -X PUT http://localhost:5000/api/v1/products/1/ \
 
 ### ❌ Delete a Product
 ```bash
-curl -X DELETE http://localhost:5000/api/v1/products/1/
+curl -X DELETE http://localhost:8000/api/v1/products/1/
 ```
 
 ### 📉 Manage Product Stock (Sell)
 ```bash
-curl -X POST http://localhost:5000/api/v1/products/1/sell/ \
+curl -X POST http://localhost:8000/api/v1/products/1/sell/ \
 -H "Content-Type: application/json" \
 -d '{"quantity_to_sell": 10}'
 ```
