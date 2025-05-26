@@ -9,7 +9,16 @@ from core.models import Product
 
 class ProductListCreateView(APIView):
     def get(self, request):
+        name_filter = request.query_params.get('name', '').strip()
+        min_qty_filter = request.query_params.get('minimum_quantity_in_stock')
         products = product_service.list_products()
+
+        if name_filter:
+            products = products.filter(name__icontains=name_filter)
+
+        if min_qty_filter and min_qty_filter.isdigit():
+            products = products.filter(quantity_in_stock__gte=int(min_qty_filter))
+
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
 
