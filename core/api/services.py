@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from .exceptions import InsufficientStockError
 from core.tasks import notify_low_stock
-import variables as variables
+from .variables import LOW_STOCK_THRESHOLD
 
 def list_products():
     return Product.objects.all()
@@ -17,7 +17,7 @@ def update_product(instance, validated_data):
             setattr(instance, attr, value)
       instance.save()
       
-      if instance.quantity_in_stock < variables.LOW_STOCK_THRESHOLD:
+      if instance.quantity_in_stock < LOW_STOCK_THRESHOLD:
             notify_low_stock.delay(instance.id, instance.name, instance.quantity_in_stock)
 
       return instance
@@ -41,7 +41,7 @@ def sell_product(instance, validated_data):
       instance.quantity_in_stock -= quantity
       instance.save()
 
-      if instance.quantity_in_stock < variables.LOW_STOCK_THRESHOLD:
+      if instance.quantity_in_stock < LOW_STOCK_THRESHOLD:
             notify_low_stock.delay(instance.id, instance.name, instance.quantity_in_stock)
 
       return instance

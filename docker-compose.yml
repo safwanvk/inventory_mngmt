@@ -1,0 +1,32 @@
+version: "3.3"
+
+services:
+  web:
+    build:
+      context: .
+    container_name: inventory_app
+    command: gunicorn inventory_mngmt.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - "8001:8000"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7
+    container_name: redis_broker
+    ports:
+      - "6379:6379"
+
+  celery:
+    build:
+      context: .
+    container_name: celery_worker
+    command: celery -A inventory_mngmt worker --loglevel=info
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      - redis
