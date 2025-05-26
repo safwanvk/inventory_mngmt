@@ -2,6 +2,7 @@
 from core.models import Product
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from .exceptions import InsufficientStockError
 
 def list_products():
     return Product.objects.all()
@@ -29,7 +30,7 @@ def sell_product(instance, validated_data):
       quantity = validated_data.get('quantity_to_sell')
 
       if instance.quantity_in_stock < quantity:
-        raise ValueError("Insufficient stock")
+        raise InsufficientStockError("Insufficient stock available.")
 
       instance.quantity_in_stock -= quantity
       instance.save()

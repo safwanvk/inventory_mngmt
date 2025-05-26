@@ -9,6 +9,7 @@ from core.models import Product
 from rest_framework.generics import ListCreateAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
+from .exceptions import InsufficientStockError
 
 class ProductListCreateView(ListCreateAPIView):
     serializer_class = ProductSerializer
@@ -31,28 +32,45 @@ class ProductListCreateView(ListCreateAPIView):
     def post(self, request):
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
-            product = product_service.create_product(serializer.validated_data)
-            return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
+            try:
+                product = product_service.create_product(serializer.validated_data)
+                return Response(ProductSerializer(product).data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ProductDetailView(APIView):
     def get(self, request, product_id):
-        product = product_service.get_product_by_id(product_id)
-        serializer = ProductSerializer(product)
-        return Response(serializer.data)
+        try:
+            product = product_service.get_product_by_id(product_id)
+            serializer = ProductSerializer(product)
+            return Response(serializer.data)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, product_id):
-        product = product_service.get_product_by_id(product_id)
-        serializer = ProductSerializer(product, data=request.data)
-        if serializer.is_valid():
-            updated_product = product_service.update_product(product, serializer.validated_data)
-            return Response(ProductSerializer(updated_product).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            product = product_service.get_product_by_id(product_id)
+            serializer = ProductSerializer(product, data=request.data)
+            if serializer.is_valid():
+                updated_product = product_service.update_product(product, serializer.validated_data)
+                return Response(ProductSerializer(updated_product).data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def delete(self, request, product_id):
-        product = product_service.get_product_by_id(product_id)
-        product_service.delete_product(product)
-        return Response({'detail': 'Product deleted'}, status=status.HTTP_204_NO_CONTENT)
+        try:
+            product = product_service.get_product_by_id(product_id)
+            product_service.delete_product(product)
+            return Response({'detail': 'Product deleted'}, status=status.HTTP_204_NO_CONTENT)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class StockManagementView(APIView):
 
@@ -62,8 +80,13 @@ class StockManagementView(APIView):
                 product = product_service.get_product_by_id_locked(product_id)
                 serializer = StockManagementSerializer(product, data=request.data)
                 if serializer.is_valid():
-                    sell_product = product_service.sell_product(product, serializer.validated_data)
-                    return Response(ProductSerializer(sell_product).data, status=status.HTTP_200_OK)
+                    try:
+                        sell_product = product_service.sell_product(product, serializer.validated_data)
+                        return Response(ProductSerializer(sell_product).data, status=status.HTTP_200_OK)
+                    except InsufficientStockError as e:
+                        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Product.DoesNotExist:
-            return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
