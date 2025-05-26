@@ -6,25 +6,27 @@ from .serializers import ProductSerializer, StockManagementSerializer
 import core.api.services as product_service
 from django.db import transaction
 from core.models import Product
+from rest_framework.generics import ListCreateAPIView
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import OrderingFilter
 
-class ProductListCreateView(APIView):
-    def get(self, request):
-        name_filter = request.query_params.get('name', '').strip()
-        min_qty_filter = request.query_params.get('minimum_quantity_in_stock')
-        ordering = request.query_params.get('ordering', 'name')
-        products = product_service.list_products()
+class ProductListCreateView(ListCreateAPIView):
+    serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    ordering_fields = ['price', 'name']
+    ordering = ['name']
 
-        if name_filter:
-            products = products.filter(name__icontains=name_filter)
+    def get_queryset(self):
+        name = self.request.query_params.get('name', '').strip()
+        min_qty = self.request.query_params.get('minimum_quantity_in_stock')
+        queryset = product_service.list_products()
 
-        if min_qty_filter and min_qty_filter.isdigit():
-            products = products.filter(quantity_in_stock__gte=int(min_qty_filter))
+        if name:
+            queryset = queryset.filter(name__icontains=name)
+        if min_qty and min_qty.isdigit():
+            queryset = queryset.filter(quantity_in_stock__gte=int(min_qty))
 
-        if ordering.lstrip('-') in ['price', 'name']:  # allow only specific fields
-            products = products.order_by(ordering)
-
-        serializer = ProductSerializer(products, many=True)
-        return Response(serializer.data)
+        return queryset
 
     def post(self, request):
         serializer = ProductSerializer(data=request.data)
